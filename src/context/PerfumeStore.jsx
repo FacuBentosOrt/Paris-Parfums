@@ -13,6 +13,7 @@ function normalizePerfume(input) {
   return {
     slug,
     name: input.name.trim(),
+    imageUrl: input.imageUrl?.trim() || "",
     family: input.family.trim(),
     shortDescription: input.shortDescription.trim(),
     heroDescription: input.heroDescription.trim(),

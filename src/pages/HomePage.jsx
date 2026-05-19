@@ -1,7 +1,7 @@
 import Layout from "../components/Layout";
 import ContactFooter from "../components/ContactFooter";
 import PerfumeCard from "../components/PerfumeCard";
-import PerfumeVisual from "../components/PerfumeVisual";
+import PerfumeMedia from "../components/PerfumeMedia";
 import { usePerfumeStore } from "../context/PerfumeStore";
 import { useRevealOnScroll } from "../hooks/useRevealOnScroll";
 
@@ -38,7 +38,7 @@ export default function HomePage() {
         </div>
 
         <aside className="panel reveal-on-scroll" data-reveal>
-          <PerfumeVisual label="PARIS" />
+          <PerfumeMedia perfume={featuredPerfume} />
           <h2>{featuredPerfume.name}</h2>
           <p>
             Una composicion intensa y elegante, pensada para dejar una estela marcada con un

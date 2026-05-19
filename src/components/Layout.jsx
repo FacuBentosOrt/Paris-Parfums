@@ -1,12 +1,20 @@
 import { useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import logo from "../assets/paris-parfums-logo.png";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import logo from "../assets/paris-parfums-logo.svg";
+
+const secretClickState = {
+  count: 0,
+  timer: null
+};
 
 export default function Layout({ children }) {
   const navigate = useNavigate();
-  const clickState = useRef({ count: 0, timer: null });
+  const location = useLocation();
+  const clickState = useRef(secretClickState);
+  const disableLogoNavigation =
+    location.pathname.startsWith("/admin") || location.pathname.startsWith("/acceso");
 
-  function handleSecretAccess() {
+  function handleSecretAccess(event) {
     clickState.current.count += 1;
 
     if (clickState.current.timer) {
@@ -18,8 +26,10 @@ export default function Layout({ children }) {
     }, 1200);
 
     if (clickState.current.count >= 5) {
+      event.preventDefault();
       clickState.current.count = 0;
       window.clearTimeout(clickState.current.timer);
+      clickState.current.timer = null;
       navigate("/acceso");
     }
   }
@@ -28,14 +38,20 @@ export default function Layout({ children }) {
     <div className="site-shell">
       <div className="page-frame">
         <header className="topbar reveal-on-scroll" data-reveal>
-          <Link
-            to="/"
-            className="logo-link"
-            aria-label="Ir al inicio"
-            onClick={handleSecretAccess}
-          >
-            <img className="logo" src={logo} alt="Paris Parfums" />
-          </Link>
+          {disableLogoNavigation ? (
+            <div className="logo-link logo-static" aria-label="Paris Parfums">
+              <img className="logo" src={logo} alt="Paris Parfums" />
+            </div>
+          ) : (
+            <Link
+              to="/"
+              className="logo-link"
+              aria-label="Ir al inicio"
+              onClick={handleSecretAccess}
+            >
+              <img className="logo" src={logo} alt="Paris Parfums" />
+            </Link>
+          )}
         </header>
         {children}
       </div>

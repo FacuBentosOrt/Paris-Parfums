@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import PerfumeVisual from "./PerfumeVisual";
+import PerfumeMedia from "./PerfumeMedia";
 
 export default function PerfumeCard({ perfume }) {
   return (
@@ -8,7 +8,7 @@ export default function PerfumeCard({ perfume }) {
       className="catalog-card reveal-on-scroll"
       data-reveal
     >
-      <PerfumeVisual />
+      <PerfumeMedia perfume={perfume} />
       <h3>{perfume.name}</h3>
       <div className="family">{perfume.family}</div>
       <p>{perfume.shortDescription}</p>

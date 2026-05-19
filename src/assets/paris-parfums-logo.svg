@@ -1,0 +1,33 @@
+<svg width="1200" height="420" viewBox="0 0 1200 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Paris Parfums</title>
+  <rect width="1200" height="420" fill="transparent"/>
+  <text
+    x="600"
+    y="185"
+    text-anchor="middle"
+    fill="#F7F4EE"
+    font-family="Didot, Bodoni MT, Baskerville, Times New Roman, serif"
+    font-size="172"
+    letter-spacing="8"
+  >
+    PARIS
+  </text>
+  <line x1="212" y1="240.5" x2="540" y2="240.5" stroke="#F7F4EE" stroke-opacity="0.82"/>
+  <line x1="660" y1="240.5" x2="988" y2="240.5" stroke="#F7F4EE" stroke-opacity="0.82"/>
+  <g transform="translate(600 241)">
+    <rect x="-8" y="-8" width="16" height="16" transform="rotate(45)" stroke="#F7F4EE" stroke-opacity="0.9"/>
+    <rect x="-3" y="-3" width="6" height="6" transform="rotate(45)" fill="#F7F4EE"/>
+  </g>
+  <text
+    x="600"
+    y="334"
+    text-anchor="middle"
+    fill="#F7F4EE"
+    font-family="Helvetica Neue, Arial, sans-serif"
+    font-size="64"
+    font-weight="500"
+    letter-spacing="24"
+  >
+    PARFUMS
+  </text>
+</svg>

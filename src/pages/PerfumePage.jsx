@@ -1,7 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import ContactFooter from "../components/ContactFooter";
 import Layout from "../components/Layout";
-import PerfumeVisual from "../components/PerfumeVisual";
+import PerfumeMedia from "../components/PerfumeMedia";
 import { usePerfumeStore } from "../context/PerfumeStore";
 import { useRevealOnScroll } from "../hooks/useRevealOnScroll";
 
@@ -96,7 +96,7 @@ export default function PerfumePage() {
         </div>
 
         <aside className="detail-panel reveal-on-scroll" data-reveal>
-          <PerfumeVisual size="large" label="PARIS" />
+          <PerfumeMedia perfume={perfume} size="large" />
           <div className="detail-panel-copy">
             <h2>{perfume.name}</h2>
             <p>{perfume.shortDescription}</p>

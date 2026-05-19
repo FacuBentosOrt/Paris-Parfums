@@ -7,6 +7,7 @@ function perfumeToForm(perfume) {
   return {
     slug: perfume.slug,
     name: perfume.name,
+    imageUrl: perfume.imageUrl || "",
     family: perfume.family,
     shortDescription: perfume.shortDescription,
     heroDescription: perfume.heroDescription,
@@ -25,6 +26,7 @@ function perfumeToForm(perfume) {
 const emptyForm = {
   slug: "",
   name: "",
+  imageUrl: "",
   family: "",
   shortDescription: "",
   heroDescription: "",
@@ -181,6 +183,15 @@ export default function AdminPage() {
               <label className="field">
                 <span>Familia</span>
                 <input name="family" value={form.family} onChange={handleChange} />
+              </label>
+              <label className="field">
+                <span>Imagen del perfume</span>
+                <input
+                  name="imageUrl"
+                  value={form.imageUrl}
+                  onChange={handleChange}
+                  placeholder="https://... o /ruta/de/imagen"
+                />
               </label>
               <label className="field">
                 <span>Presentacion</span>
