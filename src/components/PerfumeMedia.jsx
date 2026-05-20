@@ -1,5 +1,6 @@
 import PerfumeVisual from "./PerfumeVisual";
 
+// Decide si mostrar una imagen real del perfume o el placeholder visual por defecto.
 export default function PerfumeMedia({ perfume, size = "default" }) {
   if (perfume?.imageUrl) {
     const className =

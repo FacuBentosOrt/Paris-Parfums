@@ -7,6 +7,7 @@ const secretClickState = {
   timer: null
 };
 
+// Envuelve cada pagina con la cabecera del logo y la estructura visual comun.
 export default function Layout({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -14,6 +15,7 @@ export default function Layout({ children }) {
   const disableLogoNavigation =
     location.pathname.startsWith("/admin") || location.pathname.startsWith("/acceso");
 
+  // Habilita el acceso oculto al login admin con varios clicks rapidos en el logo.
   function handleSecretAccess(event) {
     clickState.current.count += 1;
 

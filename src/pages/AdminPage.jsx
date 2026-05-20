@@ -1,13 +1,18 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FIELD_LIMITS } from "../config/security";
 import Layout from "../components/Layout";
+import PerfumeMedia from "../components/PerfumeMedia";
 import { usePerfumeStore } from "../context/PerfumeStore";
+import { sanitizeImageFile } from "../utils/image";
 
+// Convierte un perfume guardado en el formato editable del formulario admin.
 function perfumeToForm(perfume) {
   return {
     slug: perfume.slug,
     name: perfume.name,
     imageUrl: perfume.imageUrl || "",
+    price: perfume.price ?? "",
     family: perfume.family,
     shortDescription: perfume.shortDescription,
     heroDescription: perfume.heroDescription,
@@ -27,6 +32,7 @@ const emptyForm = {
   slug: "",
   name: "",
   imageUrl: "",
+  price: "",
   family: "",
   shortDescription: "",
   heroDescription: "",
@@ -41,6 +47,7 @@ const emptyForm = {
   duration: ""
 };
 
+// Muestra el panel privado para crear, editar y borrar perfumes del catalogo.
 export default function AdminPage() {
   const navigate = useNavigate();
   const {
@@ -60,11 +67,32 @@ export default function AdminPage() {
     [perfumes, selectedSlug]
   );
 
+  // Sincroniza un input simple del formulario con el estado local.
   function handleChange(event) {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
   }
 
+  // Carga, sanea y guarda una imagen seleccionada localmente para el perfume.
+  async function handleImageFileChange(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const safeImageDataUrl = await sanitizeImageFile(file);
+      setForm((current) => ({
+        ...current,
+        imageUrl: safeImageDataUrl
+      }));
+      setMessage("Imagen cargada en el formulario.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo cargar la imagen.");
+    } finally {
+      event.target.value = "";
+    }
+  }
+
+  // Abre un perfume existente dentro del formulario para editarlo.
   function handleEdit(slug) {
     const perfume = perfumes.find((item) => item.slug === slug);
     if (!perfume) return;
@@ -74,34 +102,36 @@ export default function AdminPage() {
     setMessage("Editando perfume seleccionado.");
   }
 
+  // Limpia el formulario para empezar a crear un perfume nuevo.
   function handleNew() {
     setSelectedSlug("");
     setForm(emptyForm);
     setMessage("Formulario listo para crear un perfume nuevo.");
   }
 
+  // Guarda un perfume nuevo o aplica cambios sobre uno ya existente.
   function handleSubmit(event) {
     event.preventDefault();
 
-    if (!form.name.trim()) {
-      setMessage("El nombre es obligatorio.");
-      return;
-    }
+    try {
+      if (selectedPerfume) {
+        const updated = updatePerfume(selectedPerfume.slug, form);
+        setSelectedSlug(updated.slug);
+        setForm(perfumeToForm(updated));
+        setMessage("Perfume actualizado.");
+        return;
+      }
 
-    if (selectedPerfume) {
-      const updated = updatePerfume(selectedPerfume.slug, form);
-      setSelectedSlug(updated.slug);
-      setForm(perfumeToForm(updated));
-      setMessage("Perfume actualizado.");
-      return;
+      const created = addPerfume(form);
+      setSelectedSlug(created.slug);
+      setForm(perfumeToForm(created));
+      setMessage("Perfume creado.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo guardar el perfume.");
     }
-
-    const created = addPerfume(form);
-    setSelectedSlug(created.slug);
-    setForm(perfumeToForm(created));
-    setMessage("Perfume creado.");
   }
 
+  // Elimina un perfume del catalogo y resetea el formulario si estaba abierto.
   function handleDelete(slug) {
     deletePerfume(slug);
     if (selectedSlug === slug) {
@@ -110,6 +140,7 @@ export default function AdminPage() {
     setMessage("Perfume eliminado.");
   }
 
+  // Cierra la sesion administrativa y vuelve a la portada publica.
   function handleLogout() {
     logoutAdmin();
     navigate("/");
@@ -169,7 +200,12 @@ export default function AdminPage() {
             <form className="admin-form-grid" onSubmit={handleSubmit}>
               <label className="field">
                 <span>Nombre</span>
-                <input name="name" value={form.name} onChange={handleChange} />
+                <input
+                  name="name"
+                  value={form.name}
+                  onChange={handleChange}
+                  maxLength={FIELD_LIMITS.name}
+                />
               </label>
               <label className="field">
                 <span>Slug opcional</span>
@@ -178,24 +214,58 @@ export default function AdminPage() {
                   value={form.slug}
                   onChange={handleChange}
                   placeholder="Se genera desde el nombre"
+                  maxLength={FIELD_LIMITS.slug}
                 />
               </label>
               <label className="field">
                 <span>Familia</span>
-                <input name="family" value={form.family} onChange={handleChange} />
+                <input
+                  name="family"
+                  value={form.family}
+                  onChange={handleChange}
+                  maxLength={FIELD_LIMITS.family}
+                />
               </label>
               <label className="field">
-                <span>Imagen del perfume</span>
+                <span>Imagen del perfume por URL</span>
                 <input
                   name="imageUrl"
                   value={form.imageUrl}
                   onChange={handleChange}
                   placeholder="https://... o /ruta/de/imagen"
+                  maxLength={FIELD_LIMITS.imageUrl}
+                  autoComplete="off"
+                />
+              </label>
+              <label className="field">
+                <span>Subir imagen</span>
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleImageFileChange}
+                />
+              </label>
+              <label className="field">
+                <span>Precio</span>
+                <input
+                  name="price"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.price}
+                  onChange={handleChange}
+                  placeholder="120"
+                  inputMode="numeric"
                 />
               </label>
               <label className="field">
                 <span>Presentacion</span>
-                <input name="volume" value={form.volume} onChange={handleChange} />
+                <input
+                  name="volume"
+                  value={form.volume}
+                  onChange={handleChange}
+                  maxLength={FIELD_LIMITS.volume}
+                />
               </label>
               <label className="field">
                 <span>Concentracion</span>
@@ -203,19 +273,35 @@ export default function AdminPage() {
                   name="concentration"
                   value={form.concentration}
                   onChange={handleChange}
+                  maxLength={FIELD_LIMITS.concentration}
                 />
               </label>
               <label className="field">
                 <span>Etiqueta</span>
-                <input name="badge" value={form.badge} onChange={handleChange} />
+                <input
+                  name="badge"
+                  value={form.badge}
+                  onChange={handleChange}
+                  maxLength={FIELD_LIMITS.badge}
+                />
               </label>
               <label className="field">
                 <span>Intensidad</span>
-                <input name="intensity" value={form.intensity} onChange={handleChange} />
+                <input
+                  name="intensity"
+                  value={form.intensity}
+                  onChange={handleChange}
+                  maxLength={FIELD_LIMITS.intensity}
+                />
               </label>
               <label className="field">
                 <span>Duracion</span>
-                <input name="duration" value={form.duration} onChange={handleChange} />
+                <input
+                  name="duration"
+                  value={form.duration}
+                  onChange={handleChange}
+                  maxLength={FIELD_LIMITS.duration}
+                />
               </label>
               <label className="field field-full">
                 <span>Descripcion corta</span>
@@ -224,6 +310,7 @@ export default function AdminPage() {
                   value={form.shortDescription}
                   onChange={handleChange}
                   rows="3"
+                  maxLength={FIELD_LIMITS.shortDescription}
                 />
               </label>
               <label className="field field-full">
@@ -233,6 +320,7 @@ export default function AdminPage() {
                   value={form.heroDescription}
                   onChange={handleChange}
                   rows="3"
+                  maxLength={FIELD_LIMITS.heroDescription}
                 />
               </label>
               <label className="field field-full">
@@ -242,6 +330,7 @@ export default function AdminPage() {
                   value={form.detailedDescription}
                   onChange={handleChange}
                   rows="4"
+                  maxLength={FIELD_LIMITS.detailedDescription}
                 />
               </label>
               <label className="field field-full">
@@ -251,15 +340,26 @@ export default function AdminPage() {
                   value={form.narrative}
                   onChange={handleChange}
                   rows="4"
+                  maxLength={FIELD_LIMITS.narrative}
                 />
               </label>
               <label className="field field-full">
                 <span>Notas separadas por coma</span>
-                <input name="notes" value={form.notes} onChange={handleChange} />
+                <input
+                  name="notes"
+                  value={form.notes}
+                  onChange={handleChange}
+                  maxLength={FIELD_LIMITS.listCount * (FIELD_LIMITS.listItem + 2)}
+                />
               </label>
               <label className="field field-full">
                 <span>Ocasiones separadas por coma</span>
-                <input name="occasions" value={form.occasions} onChange={handleChange} />
+                <input
+                  name="occasions"
+                  value={form.occasions}
+                  onChange={handleChange}
+                  maxLength={FIELD_LIMITS.listCount * (FIELD_LIMITS.listItem + 2)}
+                />
               </label>
               <div className="field-full admin-submit-row">
                 <button className="button light" type="submit">
@@ -267,6 +367,14 @@ export default function AdminPage() {
                 </button>
               </div>
             </form>
+            <div className="admin-preview">
+              <p className="eyebrow">Vista previa</p>
+              <div className="admin-preview-card">
+                <PerfumeMedia
+                  perfume={{ name: form.name || "PARIS", imageUrl: form.imageUrl }}
+                />
+              </div>
+            </div>
           </section>
         </div>
       </section>

@@ -1,3 +1,4 @@
+// Renderiza el bloque fijo de contacto por WhatsApp del sitio.
 export default function ContactFooter() {
   return (
     <footer className="footer reveal-on-scroll" data-reveal>
