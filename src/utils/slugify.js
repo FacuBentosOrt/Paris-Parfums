@@ -1,3 +1,4 @@
+// Genera un slug URL-friendly a partir de un texto libre.
 export function slugify(value) {
   return value
     .toLowerCase()

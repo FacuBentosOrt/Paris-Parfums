@@ -1,10 +1,12 @@
 import { Link, useParams } from "react-router-dom";
 import ContactFooter from "../components/ContactFooter";
 import Layout from "../components/Layout";
-import PerfumeVisual from "../components/PerfumeVisual";
+import PerfumeMedia from "../components/PerfumeMedia";
 import { usePerfumeStore } from "../context/PerfumeStore";
 import { useRevealOnScroll } from "../hooks/useRevealOnScroll";
+import { formatPrice } from "../utils/text";
 
+// Muestra la ficha detallada de un perfume a partir de su slug en la URL.
 export default function PerfumePage() {
   useRevealOnScroll();
   const { slug } = useParams();
@@ -44,6 +46,10 @@ export default function PerfumePage() {
           <p className="detail-narrative">{perfume.narrative}</p>
 
           <div className="detail-meta-grid">
+            <div className="detail-meta-card">
+              <span className="detail-meta-label">Precio</span>
+              <strong>{formatPrice(perfume.price)}</strong>
+            </div>
             <div className="detail-meta-card">
               <span className="detail-meta-label">Presentacion</span>
               <strong>{perfume.volume}</strong>
@@ -96,7 +102,7 @@ export default function PerfumePage() {
         </div>
 
         <aside className="detail-panel reveal-on-scroll" data-reveal>
-          <PerfumeVisual size="large" label="PARIS" />
+          <PerfumeMedia perfume={perfume} size="large" />
           <div className="detail-panel-copy">
             <h2>{perfume.name}</h2>
             <p>{perfume.shortDescription}</p>

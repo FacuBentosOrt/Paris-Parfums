@@ -2,6 +2,8 @@ export const defaultPerfumes = [
   {
     slug: "midnight-sillage",
     name: "Midnight Sillage",
+    imageUrl: "",
+    price: 145,
     family: "Amaderado especiado",
     shortDescription:
       "Salida seca con incienso, vetiver y tonka para una firma nocturna de mucho caracter.",
@@ -22,6 +24,8 @@ export const defaultPerfumes = [
   {
     slug: "velours-blanc",
     name: "Velours Blanc",
+    imageUrl: "",
+    price: 118,
     family: "Almizclado floral",
     shortDescription:
       "Un perfume limpio y elegante con iris aterciopelado, musk blanco y fondo cremoso.",
@@ -42,6 +46,8 @@ export const defaultPerfumes = [
   {
     slug: "rue-noire",
     name: "Rue Noire",
+    imageUrl: "",
+    price: 172,
     family: "Cuero ambarado",
     shortDescription:
       "Notas oscuras y urbanas con cuero suave, ambar seco y un trazo ahumado refinado.",
@@ -62,6 +68,8 @@ export const defaultPerfumes = [
   {
     slug: "atelier-fume",
     name: "Atelier Fume",
+    imageUrl: "",
+    price: 136,
     family: "Resinoso mineral",
     shortDescription:
       "Una estela sofisticada con incienso claro, pimienta negra y maderas pulidas.",
@@ -82,6 +90,8 @@ export const defaultPerfumes = [
   {
     slug: "marais-gris",
     name: "Marais Gris",
+    imageUrl: "",
+    price: 98,
     family: "Citrico aromatico",
     shortDescription:
       "Bergamota, salvia y cedro para una lectura moderna y fresca dentro del mismo lenguaje.",
@@ -102,6 +112,8 @@ export const defaultPerfumes = [
   {
     slug: "velvet-accord",
     name: "Velvet Accord",
+    imageUrl: "",
+    price: 128,
     family: "Oriental suave",
     shortDescription:
       "Vainilla seca, haba tonka y un acorde textil que refuerza la sensacion de lujo.",

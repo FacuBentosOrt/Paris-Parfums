@@ -5,6 +5,7 @@ import PerfumePage from "./pages/PerfumePage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminPage from "./pages/AdminPage";
 
+// Define las rutas publicas y privadas principales de la aplicacion.
 export default function App() {
   return (
     <Routes>

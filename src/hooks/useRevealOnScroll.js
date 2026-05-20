@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 
+// Activa la clase visual de aparicion cuando un elemento entra en pantalla.
 export function useRevealOnScroll() {
   useEffect(() => {
     const elements = document.querySelectorAll("[data-reveal]");
