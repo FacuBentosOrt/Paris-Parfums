@@ -1,0 +1,13 @@
+.env
+readme.md
+LICENSE
+node_modules/
+dist/   
+coverage/
+*.log
+*.tsbuildinfo
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo

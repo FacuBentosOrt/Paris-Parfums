@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
 
     if (password === ADMIN_PASSWORD) {
       clearAdminAttempts();
-      loginAdmin();
+      loginAdmin(password);
       navigate("/admin");
       return;
     }

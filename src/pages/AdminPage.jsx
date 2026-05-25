@@ -60,6 +60,7 @@ export default function AdminPage() {
   } = usePerfumeStore();
   const [selectedSlug, setSelectedSlug] = useState("");
   const [message, setMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
   const selectedPerfume = useMemo(
@@ -110,34 +111,44 @@ export default function AdminPage() {
   }
 
   // Guarda un perfume nuevo o aplica cambios sobre uno ya existente.
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    setIsSaving(true);
 
     try {
       if (selectedPerfume) {
-        const updated = updatePerfume(selectedPerfume.slug, form);
+        const updated = await updatePerfume(selectedPerfume.slug, form);
         setSelectedSlug(updated.slug);
         setForm(perfumeToForm(updated));
         setMessage("Perfume actualizado.");
         return;
       }
 
-      const created = addPerfume(form);
+      const created = await addPerfume(form);
       setSelectedSlug(created.slug);
       setForm(perfumeToForm(created));
       setMessage("Perfume creado.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "No se pudo guardar el perfume.");
+    } finally {
+      setIsSaving(false);
     }
   }
 
   // Elimina un perfume del catalogo y resetea el formulario si estaba abierto.
-  function handleDelete(slug) {
-    deletePerfume(slug);
-    if (selectedSlug === slug) {
-      handleNew();
+  async function handleDelete(slug) {
+    setIsSaving(true);
+    try {
+      await deletePerfume(slug);
+      if (selectedSlug === slug) {
+        handleNew();
+      }
+      setMessage("Perfume eliminado.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "No se pudo borrar el perfume.");
+    } finally {
+      setIsSaving(false);
     }
-    setMessage("Perfume eliminado.");
   }
 
   // Cierra la sesion administrativa y vuelve a la portada publica.
@@ -155,17 +166,37 @@ export default function AdminPage() {
             <h1>Gestion del catalogo</h1>
             <p className="summary">
               Desde aca el duenio puede agregar, editar o borrar perfumes. Los cambios se
-              guardan en este navegador para probar el flujo completo sin backend.
+              guardan en el backend para que no se pierdan al cerrar el navegador.
             </p>
           </div>
           <div className="admin-actions">
-            <button className="button" type="button" onClick={handleNew}>
+            <button className="button" type="button" onClick={handleNew} disabled={isSaving}>
               Nuevo perfume
             </button>
-            <button className="button" type="button" onClick={resetPerfumes}>
+            <button
+              className="button"
+              type="button"
+              disabled={isSaving}
+              onClick={async () => {
+                setIsSaving(true);
+                try {
+                  await resetPerfumes();
+                  setMessage("Catalogo restaurado.");
+                  handleNew();
+                } catch (error) {
+                  setMessage(
+                    error instanceof Error
+                      ? error.message
+                      : "No se pudo restaurar el catalogo."
+                  );
+                } finally {
+                  setIsSaving(false);
+                }
+              }}
+            >
               Restaurar base
             </button>
-            <button className="button light" type="button" onClick={handleLogout}>
+            <button className="button light" type="button" onClick={handleLogout} disabled={isSaving}>
               Cerrar sesion
             </button>
           </div>
@@ -182,10 +213,10 @@ export default function AdminPage() {
                     <span>{perfume.family}</span>
                   </div>
                   <div className="admin-list-buttons">
-                    <button type="button" onClick={() => handleEdit(perfume.slug)}>
+                    <button type="button" onClick={() => handleEdit(perfume.slug)} disabled={isSaving}>
                       Editar
                     </button>
-                    <button type="button" onClick={() => handleDelete(perfume.slug)}>
+                    <button type="button" onClick={() => handleDelete(perfume.slug)} disabled={isSaving}>
                       Borrar
                     </button>
                   </div>
@@ -362,8 +393,12 @@ export default function AdminPage() {
                 />
               </label>
               <div className="field-full admin-submit-row">
-                <button className="button light" type="submit">
-                  {selectedPerfume ? "Guardar cambios" : "Crear perfume"}
+                <button className="button light" type="submit" disabled={isSaving}>
+                  {isSaving
+                    ? "Guardando..."
+                    : selectedPerfume
+                      ? "Guardar cambios"
+                      : "Crear perfume"}
                 </button>
               </div>
             </form>

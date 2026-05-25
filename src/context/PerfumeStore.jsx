@@ -1,57 +1,34 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ADMIN_INACTIVITY_TIMEOUT_MS } from "../config/security";
 import { defaultPerfumes } from "../data/perfumes";
+import Perfume from "../models/Perfume";
+import {
+  createPerfume,
+  editPerfume,
+  fetchPerfumes,
+  removePerfume,
+  restorePerfumes
+} from "../services/perfumeApi";
 import { ADMIN_LOGOUT_REASON_KEY } from "../utils/adminSecurity";
-import { validateAndNormalizePerfumeInput } from "../utils/perfumeValidation";
 
-const PERFUMES_KEY = "paris-parfums-perfumes";
 const SESSION_KEY = "paris-parfums-admin-session";
 const LAST_ACTIVITY_KEY = "paris-parfums-admin-last-activity";
+const ADMIN_PASSWORD_KEY = "paris-parfums-admin-password";
 
 const PerfumeStoreContext = createContext(null);
 
-// Completa y corrige datos persistidos para mantener compatibilidad entre versiones.
-function hydratePerfume(perfume) {
-  const fallback =
-    defaultPerfumes.find((item) => item.slug === perfume.slug) ||
-    defaultPerfumes.find((item) => item.name === perfume.name) ||
-    {};
-  const notes = Array.isArray(perfume.notes)
-    ? perfume.notes
-    : String(perfume.notes ?? fallback.notes?.join(", ") ?? "")
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-  const occasions = Array.isArray(perfume.occasions)
-    ? perfume.occasions
-    : String(perfume.occasions ?? fallback.occasions?.join(", ") ?? "")
-        .split(",")
-        .map((item) => item.trim())
-        .filter(Boolean);
-
-  return {
-    ...fallback,
-    ...perfume,
-    imageUrl: perfume.imageUrl ?? "",
-    price: Number.isFinite(Number(perfume.price))
-      ? Number(perfume.price)
-      : Number(fallback.price) || 0,
-    notes,
-    occasions
-  };
-}
-
 // Provee el catalogo, la sesion admin y las operaciones de gestion a toda la app.
 export function PerfumeStoreProvider({ children }) {
-  const [perfumes, setPerfumes] = useState(defaultPerfumes);
+  const [perfumes, setPerfumes] = useState(() => Perfume.fromCollection(defaultPerfumes));
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [isLoadingPerfumes, setIsLoadingPerfumes] = useState(true);
   const activityTimerRef = useRef(null);
 
   // Limpia la sesion admin y opcionalmente guarda el motivo del cierre.
   function clearAdminSession(reason = "") {
     window.sessionStorage.removeItem(SESSION_KEY);
     window.sessionStorage.removeItem(LAST_ACTIVITY_KEY);
+    window.sessionStorage.removeItem(ADMIN_PASSWORD_KEY);
 
     if (reason) {
       window.sessionStorage.setItem(ADMIN_LOGOUT_REASON_KEY, reason);
@@ -63,24 +40,37 @@ export function PerfumeStoreProvider({ children }) {
   }
 
   useEffect(() => {
-    const storedPerfumes = window.localStorage.getItem(PERFUMES_KEY);
     const storedSession = window.sessionStorage.getItem(SESSION_KEY);
-
-    if (storedPerfumes) {
-      try {
-        const parsed = JSON.parse(storedPerfumes).map(hydratePerfume);
-        setPerfumes(parsed);
-      } catch {
-        setPerfumes(defaultPerfumes);
-      }
-    }
-
-    setIsAdminAuthenticated(storedSession === "true");
+    const storedPassword = window.sessionStorage.getItem(ADMIN_PASSWORD_KEY);
+    setIsAdminAuthenticated(storedSession === "true" && Boolean(storedPassword));
   }, []);
 
   useEffect(() => {
-    window.localStorage.setItem(PERFUMES_KEY, JSON.stringify(perfumes));
-  }, [perfumes]);
+    let isMounted = true;
+
+    async function loadPerfumes() {
+      try {
+        const apiPerfumes = await fetchPerfumes();
+        if (isMounted) {
+          setPerfumes(Perfume.fromCollection(apiPerfumes));
+        }
+      } catch {
+        if (isMounted) {
+          setPerfumes(Perfume.fromCollection(defaultPerfumes));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingPerfumes(false);
+        }
+      }
+    }
+
+    loadPerfumes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isAdminAuthenticated) {
@@ -120,33 +110,40 @@ export function PerfumeStoreProvider({ children }) {
 
   const value = useMemo(() => {
     const featuredPerfume = perfumes[0] ?? defaultPerfumes[0];
+    const adminPassword = window.sessionStorage.getItem(ADMIN_PASSWORD_KEY) || "";
 
     return {
       perfumes,
       featuredPerfume,
       isAdminAuthenticated,
+      isLoadingPerfumes,
       getPerfumeBySlug: (slug) => perfumes.find((perfume) => perfume.slug === slug),
-      addPerfume: (input) => {
-        const normalized = validateAndNormalizePerfumeInput(input);
+      addPerfume: async (input) => {
+        const created = await createPerfume(input, adminPassword);
+        const normalized = Perfume.fromApi(created);
         setPerfumes((current) => [...current, normalized]);
         return normalized;
       },
-      updatePerfume: (slug, input) => {
-        const normalized = validateAndNormalizePerfumeInput(input);
+      updatePerfume: async (slug, input) => {
+        const updated = await editPerfume(slug, input, adminPassword);
+        const normalized = Perfume.fromApi(updated);
         setPerfumes((current) =>
           current.map((perfume) => (perfume.slug === slug ? normalized : perfume))
         );
         return normalized;
       },
-      deletePerfume: (slug) => {
+      deletePerfume: async (slug) => {
+        await removePerfume(slug, adminPassword);
         setPerfumes((current) => current.filter((perfume) => perfume.slug !== slug));
       },
-      resetPerfumes: () => {
-        setPerfumes(defaultPerfumes);
+      resetPerfumes: async () => {
+        const nextPerfumes = await restorePerfumes(adminPassword);
+        setPerfumes(Perfume.fromCollection(nextPerfumes));
       },
-      loginAdmin: () => {
+      loginAdmin: (password) => {
         window.sessionStorage.setItem(SESSION_KEY, "true");
         window.sessionStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
+        window.sessionStorage.setItem(ADMIN_PASSWORD_KEY, password);
         window.sessionStorage.removeItem(ADMIN_LOGOUT_REASON_KEY);
         setIsAdminAuthenticated(true);
       },
@@ -154,7 +151,7 @@ export function PerfumeStoreProvider({ children }) {
         clearAdminSession();
       }
     };
-  }, [isAdminAuthenticated, perfumes]);
+  }, [isAdminAuthenticated, isLoadingPerfumes, perfumes]);
 
   return (
     <PerfumeStoreContext.Provider value={value}>{children}</PerfumeStoreContext.Provider>
